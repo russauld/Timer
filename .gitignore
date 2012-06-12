@@ -1,0 +1,6 @@
+Makefile*
+ui_*.h
+*.pdb
+release/
+debug/
+
