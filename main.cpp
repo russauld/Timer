@@ -1,5 +1,6 @@
-# Timer application.
-# Written by Russell Auld
+// Qt Timer application.
+// Written by Russell Auld <russ@russauld.com>
+
 #include <QtGui/QApplication>
 #include "timer.hxx"
 

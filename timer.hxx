@@ -1,3 +1,6 @@
+// Qt Timer application.
+// Written by Russell Auld <russ@russauld.com>
+
 #ifndef TIMER_HXX
 #define TIMER_HXX
 
@@ -43,6 +46,7 @@ class Timer : public QMainWindow
 		void showSetNameDialog();
 		void setNameFromDialog();
 		void messageClicked();
+		void setCountUp(bool);
 		//void resetMinuteSlider();
 		//void hourSliderMoved(int);
 		

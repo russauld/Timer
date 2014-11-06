@@ -1,3 +1,6 @@
+// Qt Timer application.
+// Written by Russell Auld <russ@russauld.com>
+
 #include "timer.hxx"
 #include "ui_timer.h"
 #include "ui_newValueDialog.h"
@@ -32,6 +35,7 @@ Timer::Timer(QWidget *parent)
 	connect( ui->actionShowProgressBar, SIGNAL( toggled(bool) ), this, SLOT( showProgressBar(bool) ) );
 	connect( ui->actionSetTime, SIGNAL( triggered() ), this, SLOT( showSetTimeDialog() ) );
 	connect( ui->actionSetName, SIGNAL( triggered() ), this, SLOT( showSetNameDialog() ) );
+	connect( ui->actionCountUp, SIGNAL( toggled(bool) ), this, SLOT( setCountUp(bool) ) );
 	
 	signalMapper = new QSignalMapper(this);
 	connect( ui->hUpButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
@@ -79,6 +83,7 @@ Timer::Timer(QWidget *parent)
 	trayMenu->addSeparator();
 	
 	trayMenu->addAction(ui->actionSetName);
+	trayMenu->setDefaultAction(ui->actionSetName);
 	
 	quitAction = new QAction(tr("&Quit"), this);
 	connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
@@ -141,10 +146,12 @@ void Timer::start()
 	if (started) return;
 	if (hours == 0 && minutes == 0 && secs == 0) {
 		countUp=true;
-		//return;
-	}else{
-		countUp = false;
+		ui->actionCountUp->setChecked(countUp);
 	}
+	// else{
+		// countUp = false;
+	// }
+	
 	started = true;
 	// disable gui elements:
 	ui->startButton->setEnabled(false);
@@ -456,12 +463,18 @@ void Timer::setTime(const QString &val)
 void Timer::setName(const QString &val)
 {
 	name = val;
+	setWindowTitle(val);
 	showTime(false);
 }
 
 void Timer::messageClicked()
 {
 	trayIcon->setIcon(*greyIcon);
+}
+
+void Timer::setCountUp(bool b)
+{
+	countUp = b;
 }
 
 // void Timer::resetHourSlider()
