@@ -58,6 +58,7 @@ class TimerManager : public QMainWindow
 		// //void hourSliderMoved(int);
 		void newTimer();
 		void closeTimer(int);
+		void setRadioBehavior(bool);
 		
 	//public signals:
 		//	void timesUp();
