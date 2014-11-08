@@ -59,7 +59,7 @@ class TimerManager : public QMainWindow
 		void newTimer();
 		void closeTimer(int);
 		void setRadioBehavior(bool);
-		
+		void timerExpired(QString);
 	//public signals:
 		//	void timesUp();
 		
@@ -83,8 +83,9 @@ class TimerManager : public QMainWindow
 		// int  minutes;
 		// int  hours;
 		// bool off;
-		void timesUp();
+		// void timesUp();
 		bool firstHide;
+		bool radio;
 		// QAction *fiveMinAction;
 		// QAction *tenMinAction;
 		// QAction *fifteenMinAction;
