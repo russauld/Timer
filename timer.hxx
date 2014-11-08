@@ -52,6 +52,7 @@ class Timer : public QWidget
 		
 	signals:
 		void closeMe(int);
+		void timesUp(QString);
 		
 	private:
 		QString name;
