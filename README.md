@@ -16,15 +16,15 @@ You can set the name by using either the Option menu in the GUI or via tray icon
 This is a Qt application. To build it, you'll need Qt and a C++ compiler.
 
 Build Instructions:
-	Run qmake then run make (or nmake for Visual Studio)
+* Run qmake then run make (or nmake for Visual Studio)
 
 Windows deployment:
-	You need distribute the following DLLs along with the binary:
-	QtGui4.dl
-	QtCore4.dll
-	QtXml4.dll
-	QtSvg4.dll
-	iconengines/qsvgicon4.dll
+You need distribute the following DLLs along with the binary:
+* QtGui4.dl
+* QtCore4.dll
+* QtXml4.dll
+* QtSvg4.dll
+* iconengines/qsvgicon4.dll
 	
-	This last item is required to get the SVG icons to show in Windows. The application will run without it, but the icons will not appear.
-	It's part of the 'plugins' framework. See %QTDIR%/plugins/iconengines - You may need to build it, see src/plugins/iconengines.
+This last item is required to get the SVG icons to show in Windows. The application will run without it, but the icons will not appear.
+It's part of the 'plugins' framework. See %QTDIR%/plugins/iconengines - You may need to build it, see src/plugins/iconengines.
