@@ -21,6 +21,7 @@ TimerManager::TimerManager(QWidget *parent)
 	// minutes   = 5;
 	// hours     = 0;
 	firstHide = false;
+	radio = false;
 	// newTimeDialog = NULL;
 	// newNameDialog  = NULL;
 	// timer   = new QTimer(this);
@@ -110,8 +111,9 @@ TimerManager::TimerManager(QWidget *parent)
 	
 	radioAction = new QAction("&Radio Behavior",this);
 	radioAction->setCheckable(true);
-	radioAction->setChecked(false);
+	radioAction->setChecked(radio);
 	connect( radioAction, SIGNAL(toggled(bool)), this, SLOT(setRadioBehavior(bool)));
+	setRadioBehavior(radio);
 	
 	fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(newAct);
@@ -171,6 +173,7 @@ void TimerManager::newTimer()
 	Timer *t = new Timer(this, timerList.length());
 	timerList.push_back(t);
 	connect( t, SIGNAL( closeMe(int) ), this, SLOT(closeTimer(int)) );
+	connect( t, SIGNAL( timesUp(QString) ), this, SLOT(timerExpired(QString)) );
 	gridLayout->addWidget(t);
 }
 
@@ -187,6 +190,17 @@ void TimerManager::setRadioBehavior(bool v)
 {
 	// TODO: When true, allow only one timer to run at a time. When one starts, stop all others.
 	//       This will require some signal and slot work.
+	radio = v;
+}
+void TimerManager::timerExpired(QString name)
+{
+	if (isVisible()) {
+		QMessageBox::information(this,"Time's up!", "Hey! Timer \""+name+"\" expired!");
+	} else {
+		trayIcon->showMessage("Hey! Time's up!", name+" has expired", QSystemTrayIcon::Critical, 60000);
+	}
+	trayIcon->setIcon(*redIcon);
+
 }
 
 // void Timer::start()
@@ -320,15 +334,15 @@ void TimerManager::setRadioBehavior(bool v)
 	// ui->progressBar->setValue(secs);
 // }
 
-void TimerManager::timesUp()
-{
-	if (isVisible()) {
-		QMessageBox::information(this,"Time's up!", "Hey! Time's Up!");
-	} else {
-		trayIcon->showMessage("Hey! Time's up!", "The timer has expired", QSystemTrayIcon::Critical, 60000);
-	}
-	trayIcon->setIcon(*redIcon);
-}
+// void TimerManager::timesUp()
+// {
+	// if (isVisible()) {
+		// QMessageBox::information(this,"Time's up!", "Hey! Time's Up!");
+	// } else {
+		// trayIcon->showMessage("Hey! Time's up!", "The timer has expired", QSystemTrayIcon::Critical, 60000);
+	// }
+	// trayIcon->setIcon(*redIcon);
+// }
 
 // void Timer::timeCtrlClicked(int b)
 // {
