@@ -4,13 +4,11 @@
 #ifndef TIMER_HXX
 #define TIMER_HXX
 
-#include <QtGui/QMainWindow>
-#include <QLCDNumber>
-//#include <QTime>
-#include <QTimer>
+#include <QWidget>
 #include <QSignalMapper>
-#include <QSystemTrayIcon>
-#include <QCloseEvent>
+#include <QTimer>
+// #include <QSystemTrayIcon>
+// #include <QCloseEvent>
 
 namespace Ui
 {
@@ -18,16 +16,17 @@ namespace Ui
 	class SetValueDialog;
 }
 
-class Timer : public QMainWindow
+class Timer : public QWidget
 {
 	Q_OBJECT
 
 	public:
-		Timer(QWidget *parent = 0);
+		Timer(QWidget *parent, int id);
 		~Timer();
 		
 	protected:
-		void closeEvent(QCloseEvent *event);
+		// void closeEvent(QCloseEvent *event);
+		void contextMenuEvent ( QContextMenuEvent * event );
 		
 	private slots:
 		void updateTime();
@@ -38,30 +37,32 @@ class Timer : public QMainWindow
 		void timeCtrlClicked(int);
 		void showSeconds(bool);
 		void showProgressBar(bool);
-		void iconActivated(QSystemTrayIcon::ActivationReason reason);
+		// void iconActivated(QSystemTrayIcon::ActivationReason reason);
 		void setTime(const QString &);
 		void setName(const QString &);
 		void showSetTimeDialog();
 		void setTimeFromDialog();
 		void showSetNameDialog();
 		void setNameFromDialog();
-		void messageClicked();
+		// void messageClicked();
 		void setCountUp(bool);
 		//void resetMinuteSlider();
 		//void hourSliderMoved(int);
+		void closeRequest();
 		
-	//public signals:
-		//	void timesUp();
+	signals:
+		void closeMe(int);
 		
 	private:
 		QString name;
+		int id;
 		QTimer *timer;
-		//QTimer *countdownTimer;
+		// //QTimer *countdownTimer;
 		QSignalMapper *signalMapper;
-		QSystemTrayIcon *trayIcon;
-		QMenu           * trayMenu;
-		QIcon  *redIcon;
-		QIcon  *greyIcon;
+		// QSystemTrayIcon *trayIcon;
+		// QMenu           * trayMenu;
+		// QIcon  *redIcon;
+		// QIcon  *greyIcon;
 		Ui::Timer *ui;
 		Ui::SetValueDialog *newTimeDialogUi;
 		Ui::SetValueDialog *newNameDialogUi;
@@ -72,17 +73,22 @@ class Timer : public QMainWindow
 		int  secs;
 		int  minutes;
 		int  hours;
-		bool off;
-		void timesUp();
-		bool firstHide;
+		bool off; //TODO: Review the use of this. Seems irrelevant - maybe related to the blinky colons
+		// void timesUp();
+		// bool firstHide;
 		QAction *fiveMinAction;
 		QAction *tenMinAction;
 		QAction *fifteenMinAction;
 		QAction *halfHourAction;
 		QAction *oneHourAction;
-		QAction *quitAction;
+		QAction *closeAction;
 		QDialog *newTimeDialog;
 		QDialog *newNameDialog;
+		QAction *actionShowSeconds;
+		QAction *actionShowProgressBar;
+		QAction *actionSetTime;
+		QAction *actionSetName;
+		QAction *actionCountUp;
 };
 
 #endif // TIMER_HXX

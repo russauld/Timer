@@ -8,12 +8,14 @@ TARGET = Timer
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-           timer.cpp
+SOURCES += main.cpp \
+           timer.cpp \
+           timerManager.cpp
 
-HEADERS  += timer.hxx
+HEADERS  += timer.hxx \
+            timerManager.hxx
 
-FORMS    += timer.ui \
+FORMS    += timer-widget.ui \
             newValueDialog.ui
 
 RESOURCES = timer.qrc
