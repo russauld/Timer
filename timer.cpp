@@ -304,7 +304,7 @@ void Timer::updateTime()
 		}
 	}
 	showTime(true);
-	// if (done) timesUp();
+	if (done) emit timesUp(name);
 }
 
 //TODO: clean up the blinking colon technology. This argument was related to that i think and it's no longer used.
