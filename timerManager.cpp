@@ -111,6 +111,7 @@ TimerManager::TimerManager(QWidget *parent)
 	radioAction = new QAction("&Radio Behavior",this);
 	radioAction->setCheckable(true);
 	radioAction->setChecked(false);
+	connect( radioAction, SIGNAL(toggled(bool)), this, SLOT(setRadioBehavior(bool)));
 	
 	fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(newAct);
@@ -178,7 +179,14 @@ void TimerManager::closeTimer(int _id)
 	if (_id < timerList.length() ) {
 		timerList[_id]->close();
 		// deleting the widget crashes the GUI
+		// Maybe due to chained constructors?
+		// when we create the widget, we set the parent as this, so in principle it will clean up at the end.
 	}
+}
+void TimerManager::setRadioBehavior(bool v)
+{
+	// TODO: When true, allow only one timer to run at a time. When one starts, stop all others.
+	//       This will require some signal and slot work.
 }
 
 // void Timer::start()
