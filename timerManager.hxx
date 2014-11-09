@@ -7,7 +7,7 @@
 #include <QtGui/QMainWindow>
 // #include <QLCDNumber>
 // #include <QTimer>
-#include <QSignalMapper>
+// #include <QSignalMapper>
 #include <QSystemTrayIcon>
 #include <QCloseEvent>
 #include <QGridLayout>
@@ -16,6 +16,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QList>
+// #include <QToolButton>
 
 #include "timer.hxx"
 
@@ -60,6 +61,8 @@ class TimerManager : public QMainWindow
 		void closeTimer(int);
 		void setRadioBehavior(bool);
 		void timerExpired(QString);
+		void timerStarted(int);
+		
 	//public signals:
 		//	void timesUp();
 		
@@ -67,7 +70,7 @@ class TimerManager : public QMainWindow
 		// QString name;
 		// QTimer *timer;
 		//QTimer *countdownTimer;
-		QSignalMapper *signalMapper;
+		// QSignalMapper *signalMapper;
 		QSystemTrayIcon *trayIcon;
 		QMenu           * trayMenu;
 		QIcon  *redIcon;
@@ -100,6 +103,7 @@ class TimerManager : public QMainWindow
 		QWidget *centralWidget;
 		QGridLayout *gridLayout;
 		QList< Timer* > timerList;
+		// QToolButton  *toolButton;
 };
 
 #endif // TIMERMANAGER_HXX
