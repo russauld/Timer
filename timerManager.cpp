@@ -21,7 +21,7 @@ TimerManager::TimerManager(QWidget *parent)
 	// minutes   = 5;
 	// hours     = 0;
 	firstHide = false;
-	radio = false;
+	radio     = true;
 	// newTimeDialog = NULL;
 	// newNameDialog  = NULL;
 	// timer   = new QTimer(this);
@@ -50,7 +50,7 @@ TimerManager::TimerManager(QWidget *parent)
 	// signalMapper->setMapping(ui->hDownButton, 3);
 	// signalMapper->setMapping(ui->mDownButton, 4);
 	// signalMapper->setMapping(ui->sDownButton, 5);
-	// connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(timeCtrlClicked(int)));
+	// connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(timerEvent(int)));
 	// connect(signalMapper, SIGNAL(mapped(const QString &)), this, SLOT( setTime(const QString &) ));
 	
 	trayMenu = new QMenu(this);
@@ -89,6 +89,9 @@ TimerManager::TimerManager(QWidget *parent)
 	// it also needs to be accounted for in the iconActivated() function. See below where hook up the signals from the tray icon.
 	centralWidget = new QWidget(this);
 	gridLayout = new QGridLayout(centralWidget);
+	gridLayout->setContentsMargins(3,3,3,3);
+	gridLayout->setSpacing(3);
+	
 	centralWidget->setLayout(gridLayout);
 	setCentralWidget(centralWidget);
 	
@@ -170,10 +173,15 @@ void TimerManager::closeEvent(QCloseEvent *event)
 
 void TimerManager::newTimer()
 {
-	Timer *t = new Timer(this, timerList.length());
+	int id = timerList.length(); 
+	Timer *t = new Timer(this, id);
 	timerList.push_back(t);
 	connect( t, SIGNAL( closeMe(int) ), this, SLOT(closeTimer(int)) );
 	connect( t, SIGNAL( timesUp(QString) ), this, SLOT(timerExpired(QString)) );
+	connect( t, SIGNAL( started(int) ), this, SLOT( timerStarted(int) ) );
+	// connect( t, SIGNAL( stopped(int) ), this, SLOT( timerStopped(int) ) );
+	// signalMapper->setMapping(t, id);
+	
 	gridLayout->addWidget(t);
 }
 
@@ -201,6 +209,22 @@ void TimerManager::timerExpired(QString name)
 	}
 	trayIcon->setIcon(*redIcon);
 
+}
+// Slot to receive started events from the timers.
+// When working in radio mode, stop all the other timers when one starts.
+void TimerManager::timerStarted(int c)
+{
+	if (radio) {
+		QList< Timer* >::const_iterator i;
+		for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i ) {
+			if (*i != NULL) {
+				if ( c != (*i)->getId()) {
+					(*i)->stop();
+				}
+			}
+		}
+	}
+	
 }
 
 // void Timer::start()
