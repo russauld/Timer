@@ -23,6 +23,10 @@ class Timer : public QWidget
 	public:
 		Timer(QWidget *parent, int id);
 		~Timer();
+		int getId();
+		
+	public slots:
+		void stop();
 		
 	protected:
 		// void closeEvent(QCloseEvent *event);
@@ -33,7 +37,7 @@ class Timer : public QWidget
 		void showTime(bool toggle_colon);
 		//void showTimeWithToggle();
 		void start();
-		void stop();
+		void stopReset();
 		void timeCtrlClicked(int);
 		void showSeconds(bool);
 		void showProgressBar(bool);
@@ -53,6 +57,7 @@ class Timer : public QWidget
 	signals:
 		void closeMe(int);
 		void timesUp(QString);
+		void started(int);
 		
 	private:
 		QString name;
@@ -67,7 +72,7 @@ class Timer : public QWidget
 		Ui::Timer *ui;
 		Ui::SetValueDialog *newTimeDialogUi;
 		Ui::SetValueDialog *newNameDialogUi;
-		bool started;
+		bool _started;
 		bool showSecs;
 		bool showBar;
 		bool countUp;
