@@ -18,7 +18,7 @@ Timer::Timer(QWidget *parent, int _id)
 	ui->setupUi(this);
 	id        = _id;
 	name      = "Timer"+QString("%1").arg(id);
-	started   = false;
+	_started   = false;
 	off       = false;
 	countUp   = false;
 	showSecs  = true;
@@ -34,7 +34,7 @@ Timer::Timer(QWidget *parent, int _id)
 	setName(name);
 	
 	connect( ui->startButton, SIGNAL( clicked() ), this, SLOT( start() ) );
-	connect( ui->stopButton,  SIGNAL( clicked() ), this, SLOT( stop()  ) );
+	connect( ui->stopButton,  SIGNAL( clicked() ), this, SLOT( stopReset()  ) );
 	// connect( ui->actionExit,  SIGNAL(triggered()), qApp, SLOT( quit()  ) );
 	// connect( ui->actionShowSeconds, SIGNAL( toggled(bool) ), this, SLOT(showSeconds(bool) ) );
 	// // Calling this function should cause the toggled() signal to be emitted:
@@ -161,7 +161,6 @@ Timer::~Timer()
 
 void Timer::contextMenuEvent( QContextMenuEvent * event ) 
 {
-	//QMessageBox::information(this,"Timer","Contextmenu");
 	QMenu menu(this);
 	menu.addAction(actionShowSeconds);
 	menu.addAction(actionShowProgressBar);
@@ -205,16 +204,16 @@ void Timer::closeRequest(void)
  
 void Timer::start()
 {
-	if (started) return;
+	if (_started) return;
 	if (hours == 0 && minutes == 0 && secs == 0) {
-		countUp=true;
+		setCountUp(true);
 		// ui->actionCountUp->setChecked(countUp);
 	}
 	// else{
 		// countUp = false;
 	// }
 	
-	started = true;
+	_started = true;
 	// disable gui elements:
 	ui->startButton->setEnabled(false);
 	ui->hUpButton->setEnabled(false);
@@ -233,22 +232,12 @@ void Timer::start()
 	fifteenMinAction->setEnabled(false);
 	halfHourAction->setEnabled(false);
 	oneHourAction->setEnabled(false);
+	emit started(id);
 }
 
 void Timer::stop()
 {
-	// Dual function button. If already stopped, reset the timer value:
-	if (!started) {
-		//reset:
-		hours = 0;
-		minutes = 0;
-		secs = 0;
-		//off = false;
-		showTime(false);
-		// trayIcon->setIcon(*greyIcon);
-		return;
-	}
-	started = false;
+	_started = false;
 	//disconnect(countdownTimer, SIGNAL( timeout() ), this, SLOT( updateTime() ) );
 	disconnect(timer, SIGNAL( timeout() ), this, SLOT( updateTime() ) );
 	//disconnect(timer, SIGNAL( timeout() ), this, SLOT( showTimeWithToggle() ) );
@@ -266,6 +255,22 @@ void Timer::stop()
 	fifteenMinAction->setEnabled(true);
 	halfHourAction->setEnabled(true);
 	oneHourAction->setEnabled(true);
+}
+
+void Timer::stopReset()
+{
+	// Dual function button. If already stopped, reset the timer value:
+	if (!_started) {
+		//reset:
+		hours = 0;
+		minutes = 0;
+		secs = 0;
+		//off = false;
+		showTime(false);
+		// trayIcon->setIcon(*greyIcon);
+		return;
+	}
+	stop();
 }
 
 void Timer::updateTime()
@@ -347,7 +352,7 @@ void Timer::showTime(bool toggle_colon)
 
 void Timer::timeCtrlClicked(int b)
 {
-	if (started) return;
+	if (_started) return;
 	
 	switch (b) {
 		case 0:
@@ -379,6 +384,9 @@ void Timer::timeCtrlClicked(int b)
 	//off=false;
 	showTime(false);
 }
+int Timer::getId() {
+	return id;
+}
 
 void Timer::showSeconds(bool val)
 {
@@ -391,7 +399,7 @@ void Timer::showSeconds(bool val)
 		ui->sUpButton->hide();
 		ui->sDownButton->hide();
 	}
-	showTime(started);
+	showTime(_started);
 }
 
 void Timer::showProgressBar(bool val)
@@ -402,7 +410,7 @@ void Timer::showProgressBar(bool val)
 	}else{
 		ui->progressBar->hide();
 	}
-	showTime(started);
+	showTime(_started);
 }
 
 void Timer::showSetTimeDialog()
@@ -483,7 +491,7 @@ void Timer::setTime(const QString &val)
 		QMessageBox::warning(this,"Timer","Invalid value");
 		return;
 	}
-	if (started) {
+	if (_started) {
 		if (! isVisible()) {
 			show();
 		}
@@ -539,6 +547,7 @@ void Timer::setName(const QString &val)
 void Timer::setCountUp(bool b)
 {
 	countUp = b;
+	actionCountUp->setChecked(b);
 }
 
 // void Timer::resetHourSlider()
@@ -560,17 +569,17 @@ void Timer::setCountUp(bool b)
 
 // void Timer::on_pushButton_clicked()
 // {
-   // if (!started) {
+   // if (!_started) {
       // randomStopTime();
       // time->start();
       // connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
-      // started = true;
+      // _started = true;
       // ui->pushButton->setText("Stop");
       // return;
    // }
    // else{
       // disconnect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
-      // started = false;
+      // _started = false;
       // ui->pushButton->setText("Start");
       // checkResult();
    // }
