@@ -4,10 +4,7 @@
 #ifndef TIMERMANAGER_HXX
 #define TIMERMANAGER_HXX
 
-#include <QtGui/QMainWindow>
-// #include <QLCDNumber>
-// #include <QTimer>
-// #include <QSignalMapper>
+#include <QMainWindow>
 #include <QSystemTrayIcon>
 #include <QCloseEvent>
 #include <QGridLayout>
@@ -16,15 +13,8 @@
 #include <QAction>
 #include <QApplication>
 #include <QList>
-// #include <QToolButton>
 
 #include "timer.hxx"
-
-// namespace Ui
-// {
-	// class Timer;
-	// class SetValueDialog;
-// }
 
 class TimerManager : public QMainWindow
 {
@@ -36,6 +26,7 @@ class TimerManager : public QMainWindow
 		
 	protected:
 		void closeEvent(QCloseEvent *event);
+		void resizeEvent(QResizeEvent *event);
 		
 	private slots:
 		// void updateTime();
@@ -62,48 +53,40 @@ class TimerManager : public QMainWindow
 		void setRadioBehavior(bool);
 		void timerExpired(QString);
 		void timerStarted(int);
+		void debug();
+		void resizeTimeout();
+		void setLayoutType(int);
 		
 	//public signals:
 		//	void timesUp();
 		
 	private:
-		// QString name;
-		// QTimer *timer;
-		//QTimer *countdownTimer;
-		// QSignalMapper *signalMapper;
 		QSystemTrayIcon *trayIcon;
-		QMenu           * trayMenu;
+		QMenu           *trayMenu;
 		QIcon  *redIcon;
 		QIcon  *greyIcon;
-		// Ui::Timer *ui;
-		// Ui::SetValueDialog *newTimeDialogUi;
-		// Ui::SetValueDialog *newNameDialogUi;
-		// bool started;
-		// bool showSecs;
-		// bool showBar;
-		// bool countUp;
-		// int  secs;
-		// int  minutes;
-		// int  hours;
-		// bool off;
-		// void timesUp();
 		bool firstHide;
 		bool radio;
-		// QAction *fiveMinAction;
-		// QAction *tenMinAction;
-		// QAction *fifteenMinAction;
-		// QAction *halfHourAction;
-		// QAction *oneHourAction;
+		int nTimer;
+		int resizeTimeoutVal;
+		int layout;
+		QSignalMapper *signalMapper;
 		QAction *quitAction;
 		QAction *newAct;
 		QAction *radioAction;
-		QMenu *fileMenu;
-		// QDialog *newTimeDialog;
-		// QDialog *newNameDialog;
+		QAction *debugAction;
+		QMenu   *fileMenu;
+		QMenu   *optionMenu;
+		QMenu   *layoutMenu;
+		QActionGroup *layoutGroup;
+		QAction *horizontalAction;
+		QAction *verticalAction;
+		QAction *gridAction;
 		QWidget *centralWidget;
 		QGridLayout *gridLayout;
 		QList< Timer* > timerList;
-		// QToolButton  *toolButton;
+		// QTimer *resizeTimer;
+		void computeLayout(void);
 };
 
 #endif // TIMERMANAGER_HXX
