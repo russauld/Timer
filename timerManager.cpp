@@ -2,97 +2,28 @@
 // Written by Russell Auld <russ@russauld.com>
 
 #include "timerManager.hxx"
-//#include "ui_timer.h"
-//#include "ui_newValueDialog.h"
 
-// #include <QDebug> // TODO: Remove for prod release?
 #include <QMessageBox>
 
 TimerManager::TimerManager(QWidget *parent)
     : QMainWindow(parent)
 {
-	// name      = "Timer";
-	// started   = false;
-	// off       = false;
-	// countUp   = false;
-	// showSecs  = false;
-	// showBar   = true;
-	// secs      = 0;
-	// minutes   = 5;
-	// hours     = 0;
 	firstHide = false;
 	radio     = true;
-	// newTimeDialog = NULL;
-	// newNameDialog  = NULL;
-	// timer   = new QTimer(this);
-	// timer->start(1000); // one second
-	
-	// connect( ui->startButton, SIGNAL( clicked() ), this, SLOT( start() ) );
-	// connect( ui->stopButton,  SIGNAL( clicked() ), this, SLOT( stop()  ) );
-	// connect( ui->actionExit,  SIGNAL(triggered()), qApp, SLOT( quit()  ) );
-	// connect( ui->actionShowSeconds, SIGNAL( toggled(bool) ), this, SLOT(showSeconds(bool) ) );
-	// // Calling this function should cause the toggled() signal to be emitted:
-	// connect( ui->actionShowProgressBar, SIGNAL( toggled(bool) ), this, SLOT( showProgressBar(bool) ) );
-	// connect( ui->actionSetTime, SIGNAL( triggered() ), this, SLOT( showSetTimeDialog() ) );
-	// connect( ui->actionSetName, SIGNAL( triggered() ), this, SLOT( showSetNameDialog() ) );
-	// connect( ui->actionCountUp, SIGNAL( toggled(bool) ), this, SLOT( setCountUp(bool) ) );
-	
-	// signalMapper = new QSignalMapper(this);
-	// connect( ui->hUpButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
-	// connect( ui->mUpButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
-	// connect( ui->sUpButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
-	// connect( ui->hDownButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
-	// connect( ui->mDownButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
-	// connect( ui->sDownButton, SIGNAL( clicked() ), signalMapper, SLOT( map() ) );
-	// signalMapper->setMapping(ui->hUpButton, 0);
-	// signalMapper->setMapping(ui->mUpButton, 1);
-	// signalMapper->setMapping(ui->sUpButton, 2);
-	// signalMapper->setMapping(ui->hDownButton, 3);
-	// signalMapper->setMapping(ui->mDownButton, 4);
-	// signalMapper->setMapping(ui->sDownButton, 5);
-	// connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(timerEvent(int)));
-	// connect(signalMapper, SIGNAL(mapped(const QString &)), this, SLOT( setTime(const QString &) ));
+	nTimer    = 0;
+	resizeTimeoutVal = 250; // msecs
 	
 	trayMenu = new QMenu(this);
-	
-	// fiveMinAction = new QAction("5:00",this);
-	// connect(fiveMinAction, SIGNAL(triggered()), signalMapper, SLOT( map() ) );
-	// signalMapper->setMapping(fiveMinAction, "5:00");
-	// trayMenu->addAction(fiveMinAction);
-	
-	// tenMinAction = new QAction("10:00",this);
-	// connect(tenMinAction, SIGNAL( triggered() ), signalMapper, SLOT( map() ) );
-	// signalMapper->setMapping(tenMinAction, "10:00");
-	// trayMenu->addAction(tenMinAction);
-	
-	// fifteenMinAction = new QAction("15:00",this);
-	// connect(fifteenMinAction, SIGNAL( triggered() ), signalMapper, SLOT( map() ) );
-	// signalMapper->setMapping(fifteenMinAction, "15:00");
-	// trayMenu->addAction(fifteenMinAction);
-	
-	// halfHourAction = new QAction("30:00",this);
-	// connect(halfHourAction, SIGNAL( triggered() ), signalMapper, SLOT( map() ) );
-	// signalMapper->setMapping(halfHourAction, "30:00");
-	// trayMenu->addAction(halfHourAction);
-	
-	// oneHourAction = new QAction("1:00:00",this);
-	// connect(oneHourAction, SIGNAL( triggered() ), signalMapper, SLOT( map() ) );
-	// signalMapper->setMapping(oneHourAction, "1:00:00");
-	// trayMenu->addAction(oneHourAction);
-	
-	// trayMenu->addSeparator();
-	
-	// trayMenu->addAction(ui->actionSetName);
 	
 	// trayMenu->setDefaultAction(ui->actionSetName);
 	// instead of this, call a private function that will handle what the default action is.
 	// it also needs to be accounted for in the iconActivated() function. See below where hook up the signals from the tray icon.
+	this->setGeometry(100,100,100,100);
 	centralWidget = new QWidget(this);
 	gridLayout = new QGridLayout(centralWidget);
 	gridLayout->setContentsMargins(3,3,3,3);
 	gridLayout->setSpacing(3);
 	
-	centralWidget->setLayout(gridLayout);
 	setCentralWidget(centralWidget);
 	
 	quitAction = new QAction(tr("&Quit"), this);
@@ -118,38 +49,67 @@ TimerManager::TimerManager(QWidget *parent)
 	connect( radioAction, SIGNAL(toggled(bool)), this, SLOT(setRadioBehavior(bool)));
 	setRadioBehavior(radio);
 	
+	debugAction = new QAction("Debug",this);
+	connect( debugAction, SIGNAL(triggered()), this, SLOT(debug()));
+	
 	fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(newAct);
 	fileMenu->addAction(radioAction);
+	// fileMenu->addAction(debugAction);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAction);
-	// ui->actionShowSeconds->setChecked(showSecs);
-	// ui->actionShowProgressBar->setChecked(showBar);
-	//showTime(false);
+	
+	layoutGroup = new QActionGroup(this);
+	horizontalAction = new QAction(tr("&Horizontal"),layoutGroup);
+	horizontalAction->setCheckable(true);
+	// connect(horizontalAction, SIGNAL(triggered()), this, SLOT(setLayoutType()) );
+	
+	verticalAction = new QAction(tr("&Vertical"),layoutGroup);
+	verticalAction->setCheckable(true);
+	// connect(verticalAction, SIGNAL(triggered()), this, SLOT(setLayoutType()) );
+	
+	gridAction = new QAction(tr("&Grid"),layoutGroup);
+	gridAction->setCheckable(true);
+	// connect(gridAction, SIGNAL(triggered()), this, SLOT(setLayoutType()) );
+
+	signalMapper = new QSignalMapper(this);
+	connect(horizontalAction, SIGNAL( triggered() ), signalMapper, SLOT( map() ) );
+	connect(verticalAction, SIGNAL(triggered()), signalMapper, SLOT( map() ) );
+	connect(gridAction, SIGNAL(triggered()), signalMapper, SLOT( map() ) );
+	signalMapper->setMapping(horizontalAction, 0);
+	signalMapper->setMapping(verticalAction, 1);
+	signalMapper->setMapping(gridAction, 2);
+	connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(setLayoutType(int)) );
+
+	layout = 2;
+	gridAction->setChecked(true);
+	
+	optionMenu = menuBar()->addMenu(tr("&Option"));
+	layoutMenu = optionMenu->addMenu(tr("&Layout"));
+	layoutMenu->addAction(horizontalAction);
+	layoutMenu->addAction(verticalAction);
+	layoutMenu->addAction(gridAction);
+	
+	// resizeTimer = new QTimer(this);
+	// connect(resizeTimer, SIGNAL( timeout() ), this, SLOT( resizeTimeout() ) );
 }
 
 TimerManager::~TimerManager()
 {
-	// delete ui;
-	// delete timer;
-	// delete signalMapper;
 	delete trayMenu;
 	delete trayIcon;
 	delete redIcon;
 	delete greyIcon;
-	// delete fiveMinAction;
-	// delete tenMinAction;
-	// delete fifteenMinAction;
-	// delete halfHourAction;
-	// delete oneHourAction;
 	delete quitAction;
-	// delete newTimeDialog;
-	// delete newNameDialog;
-	delete gridLayout;
 	delete centralWidget;
 	delete newAct;
 	delete radioAction;
+	delete debugAction;
 	delete fileMenu;
+	delete layoutMenu;
+	delete optionMenu;
+	// delete resizeTimer;
+	delete layoutGroup;
 }
 
 void TimerManager::closeEvent(QCloseEvent *event)
@@ -171,35 +131,75 @@ void TimerManager::closeEvent(QCloseEvent *event)
 	}
 }
 
+void TimerManager::resizeEvent(QResizeEvent *event)
+{
+	// This will get called repeatedly as the window is dragged. We only want to update occasionally, so we use a timer.
+	// resizeTimer->stop();
+	// resizeTimer->start(resizeTimeoutVal);
+	QMainWindow::resizeEvent(event);
+}
+
 void TimerManager::newTimer()
 {
 	int id = timerList.length(); 
-	Timer *t = new Timer(this, id);
+	Timer *t = new Timer(centralWidget, id);
 	timerList.push_back(t);
 	connect( t, SIGNAL( closeMe(int) ), this, SLOT(closeTimer(int)) );
 	connect( t, SIGNAL( timesUp(QString) ), this, SLOT(timerExpired(QString)) );
 	connect( t, SIGNAL( started(int) ), this, SLOT( timerStarted(int) ) );
-	// connect( t, SIGNAL( stopped(int) ), this, SLOT( timerStopped(int) ) );
-	// signalMapper->setMapping(t, id);
-	
-	gridLayout->addWidget(t);
+	// int row = nTimer % 2;
+	// int col = nTimer / 2;
+	// gridLayout->addWidget(t,row,col);
+	// QSize x = t->size();
+	// QString s = QString("id: %1, h=%2, w=%3").arg(id).arg(x.height()).arg(x.width());
+	// QMessageBox::information(this,"DEBUG",s);
+	nTimer++;
+	computeLayout();
+}
+
+void TimerManager::debug()
+{
+	QString s;
+	QList< Timer* >::const_iterator i;
+	for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i ) {
+		if (*i != NULL) {
+			QSize x = (*i)->size();
+			s += QString("id: %1, h=%2, w=%3\n").arg( (*i)->getId()).arg(x.height()).arg(x.width());
+		}
+	}
+	QMessageBox::information(this,"DEBUG", s);
 }
 
 void TimerManager::closeTimer(int _id)
 {
 	if (_id < timerList.length() ) {
 		timerList[_id]->close();
+		gridLayout->removeWidget(timerList[_id]);
+		//Timer *t = timerList[_id];
+		timerList[_id] = NULL;
+		//delete t;
 		// deleting the widget crashes the GUI
 		// Maybe due to chained constructors?
 		// when we create the widget, we set the parent as this, so in principle it will clean up at the end.
+		// The layout takes ownership of the widget so it will handle the delete.
+		nTimer--;
+		computeLayout();
 	}
 }
+
 void TimerManager::setRadioBehavior(bool v)
 {
-	// TODO: When true, allow only one timer to run at a time. When one starts, stop all others.
-	//       This will require some signal and slot work.
 	radio = v;
 }
+
+void TimerManager::setLayoutType(int t)
+{
+	int oldlayout = layout;
+	layout = t;
+	if (oldlayout != layout)
+		computeLayout();
+}
+
 void TimerManager::timerExpired(QString name)
 {
 	if (isVisible()) {
@@ -210,6 +210,7 @@ void TimerManager::timerExpired(QString name)
 	trayIcon->setIcon(*redIcon);
 
 }
+
 // Slot to receive started events from the timers.
 // When working in radio mode, stop all the other timers when one starts.
 void TimerManager::timerStarted(int c)
@@ -224,245 +225,7 @@ void TimerManager::timerStarted(int c)
 			}
 		}
 	}
-	
 }
-
-// void Timer::start()
-// {
-	// if (started) return;
-	// if (hours == 0 && minutes == 0 && secs == 0) {
-		// countUp=true;
-		// ui->actionCountUp->setChecked(countUp);
-	// }
-	// // else{
-		// // countUp = false;
-	// // }
-	
-	// started = true;
-	// // disable gui elements:
-	// ui->startButton->setEnabled(false);
-	// ui->hUpButton->setEnabled(false);
-	// ui->mUpButton->setEnabled(false);
-	// ui->sUpButton->setEnabled(false);
-	// ui->hDownButton->setEnabled(false);
-	// ui->mDownButton->setEnabled(false);
-	// ui->sDownButton->setEnabled(false);
-	// connect(timer, SIGNAL( timeout() ), this, SLOT( updateTime() ) );
-	// //connect(timer, SIGNAL( timeout() ), this, SLOT( showTimeWithToggle() ) );
-	// off = true;
-	// //showTime(true);
-	// trayIcon->setIcon(*greyIcon);
-// }
-
-// void Timer::stop()
-// {
-	// // Dual function button. If already stopped, reset the timer value:
-	// if (!started) {
-		// //reset:
-		// hours = 0;
-		// minutes = 0;
-		// secs = 0;
-		// //off = false;
-		// showTime(false);
-		// trayIcon->setIcon(*greyIcon);
-		// return;
-	// }
-	// started = false;
-	// //disconnect(countdownTimer, SIGNAL( timeout() ), this, SLOT( updateTime() ) );
-	// disconnect(timer, SIGNAL( timeout() ), this, SLOT( updateTime() ) );
-	// //disconnect(timer, SIGNAL( timeout() ), this, SLOT( showTimeWithToggle() ) );
-	// //off = false;
-	// //showTime(false);
-	// ui->startButton->setEnabled(true);
-	// ui->hUpButton->setEnabled(true);
-	// ui->mUpButton->setEnabled(true);
-	// ui->sUpButton->setEnabled(true);
-	// ui->hDownButton->setEnabled(true);
-	// ui->mDownButton->setEnabled(true);
-	// ui->sDownButton->setEnabled(true);
-// }
-
-// void Timer::updateTime()
-// {
-	// bool done=false;
-	// if (countUp) {
-		// secs++;
-		// if (secs > 59 ) {
-			// secs = 0;
-			// minutes++;
-		// }
-		// if (minutes > 59) {
-			// minutes = 0;
-			// hours++;
-		// }
-		// // if (hours > 23) {
-			// // hours = 0;
-		// // }
-	// }
-	// else{
-		// // Count down:
-		// secs--;
-		
-		// if (hours == 0 && minutes == 0 && secs == 0) {
-			// stop();
-			// done=true;
-		// }
-		
-		// if (secs < 0 ) {
-			// secs = 59;
-			// minutes--;
-		// }
-		// if (minutes < 0) {
-			// minutes = 59;
-			// hours--;
-		// }
-	// }
-	// showTime(true);
-	// if (done) timesUp();
-// }
-
-// void Timer::showTime(bool toggle_colon)
-// {
-	// QString time;
-	// if (showSecs) {
-		// //digits  = 8;
-		// ui->lcdNumber->setDigitCount(8);
-		// //ui->lcdNumber->display(QString("0:05:00"));
-		
-		// time = QString("%1:%2:%3").arg(hours,2).arg(minutes,2,10,QChar('0')).arg(secs,2,10,QChar('0'));
-		// // if (toggle_colon) {
-			// // if (off) {
-				// // time[2]=' ';
-				// // time[5]=' ';
-				// // off = false;
-			// // }else{
-				// // off = true;
-			// // }
-		// // }
-	// }else{
-		// //digits  = 5;
-		// ui->lcdNumber->setDigitCount(5);
-		
-		// time = QString("%1:%2").arg(hours,2).arg(minutes,2,10,QChar('0'));
-		// // if (toggle_colon) {
-			// // if (off) {
-				// // time[2]=' ';
-				// // off = false;
-			// // }else{
-				// // off = true;
-			// // }
-		// // }
-	// }
-	// ui->lcdNumber->display(time);
-	// trayIcon->setToolTip(name+": "+time);
-	// ui->progressBar->setValue(secs);
-// }
-
-// void TimerManager::timesUp()
-// {
-	// if (isVisible()) {
-		// QMessageBox::information(this,"Time's up!", "Hey! Time's Up!");
-	// } else {
-		// trayIcon->showMessage("Hey! Time's up!", "The timer has expired", QSystemTrayIcon::Critical, 60000);
-	// }
-	// trayIcon->setIcon(*redIcon);
-// }
-
-// void Timer::timeCtrlClicked(int b)
-// {
-	// if (started) return;
-	
-	// switch (b) {
-		// case 0:
-			// hours++;
-			// //if (hours > 23) hours=0; // let's be honest here
-			// break;
-		// case 1:
-			// minutes++;
-			// if (minutes > 59) minutes=0;
-			// break;
-		// case 2:
-			// secs++;
-			// if (secs > 59) secs=0;
-			// break;
-		// case 3:
-			// hours--;
-			// if (hours < 0) hours=0;
-			// break;
-		// case 4:
-			// minutes--;
-			// if (minutes < 0) minutes=0;
-			// break;
-		// case 5:
-			// secs--;
-			// if (secs < 0) secs=0;
-			// break;
-		// //default:
-	// }
-	// //off=false;
-	// showTime(false);
-// }
-
-// void Timer::showSeconds(bool val)
-// {
-	// showSecs = val;
-	// if (val) {
-		// ui->sUpButton->show();
-		// ui->sDownButton->show();
-	// }
-	// else{
-		// ui->sUpButton->hide();
-		// ui->sDownButton->hide();
-	// }
-	// showTime(started);
-// }
-
-// void Timer::showProgressBar(bool val)
-// {
-	// showBar = val;
-	// if (val) {
-		// ui->progressBar->show();
-	// }else{
-		// ui->progressBar->hide();
-	// }
-	// showTime(started);
-// }
-
-// void Timer::showSetTimeDialog()
-// {
-	// if (!newTimeDialog) {
-		// newTimeDialog = new QDialog(this);
-		// newTimeDialogUi->setupUi(newTimeDialog);
-		// connect(newTimeDialog, SIGNAL( accepted() ), this, SLOT(setTimeFromDialog()) );
-		// newTimeDialogUi->lineEdit->setWhatsThis(tr("Enter new time value"));
-	// }
-	// newTimeDialogUi->lineEdit->setFocus(Qt::PopupFocusReason);
-	// newTimeDialog->exec();
-// }
-
-// void Timer::showSetNameDialog()
-// {
-	// if (!newNameDialog) {
-		// newNameDialog = new QDialog(this);
-		// newNameDialogUi->setupUi(newNameDialog);
-		// connect(newNameDialog, SIGNAL( accepted() ), this, SLOT(setNameFromDialog()) );
-		// newNameDialogUi->lineEdit->setWhatsThis(tr("Enter new name"));
-	// }
-	// newNameDialogUi->lineEdit->setText(name);
-	// newNameDialogUi->lineEdit->selectAll();
-	// newNameDialogUi->lineEdit->setFocus(Qt::PopupFocusReason);
-	// newNameDialog->exec();
-// }
-
-// void Timer::setTimeFromDialog()
-// {
-	// setTime(newTimeDialogUi->lineEdit->text());
-// }
-
-// void Timer::setNameFromDialog()
-// {
-	// setName(newNameDialogUi->lineEdit->text());
-// }
 
 void TimerManager::iconActivated(QSystemTrayIcon::ActivationReason reason)
 {
@@ -498,121 +261,68 @@ void TimerManager::iconActivated(QSystemTrayIcon::ActivationReason reason)
 	}
 }
 
-// void Timer::setTime(const QString &val)
-// {
-	// // validate the input value using a regex.
-	// // This will match anything other than numbers and colons
-	// QRegExp rx("[^\\d:]");
-	// // If no match, the return value will be -1
-	// if (rx.indexIn(val) != -1) {
-		// QMessageBox::warning(this,"Timer","Invalid value");
-		// return;
-	// }
-	// if (started) {
-		// if (! isVisible()) {
-			// show();
-		// }
-		// return;
-	// }
-	
-	// QStringList list = val.split(":");
-	// switch(list.size()) {
-		// case 1:
-			// hours   = 0;
-			// minutes = list[0].toInt();
-			// secs    = 0;
-			// break;
-		// case 2:
-			// hours   = 0;
-			// minutes = list[0].toInt();
-			// secs    = list[1].toInt();
-			// break;
-		// case 3:
-			// hours   = list[0].toInt();
-			// minutes = list[1].toInt();
-			// secs    = list[2].toInt();
-	// }
-	// minutes += secs / 60;
-	// secs    %= 60;
-	// hours   += minutes / 60;
-	// minutes %= 60;
-	
-	// // update display
-	// showTime(false);
-	
-	// if (! isVisible()) {
-		// //show();
-		// // go ahead and start counting down if called from tray icon:
-		// start();
-	// }
-	
-// }
+// Slot connected to our resizeTimer. 
+void TimerManager::resizeTimeout(void)
+{
+	// resizeTimer->stop();
+	// computeLayout();
+}
 
-// void Timer::setName(const QString &val)
-// {
-	// name = val;
-	// setWindowTitle(val);
-	// showTime(false);
-// }
+void TimerManager::computeLayout(void)
+{
+	// remove all widgets from the grid layout:
+	QList< Timer* >::const_iterator i;
+	for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i ) {
+		if (*i != NULL) {
+			gridLayout->removeWidget(*i);
+		}
+	}
+	
+	// Compute number of columns and rows:
+	int nrow=0,ncol=0;
+	bool done = false;
+	for (int j=1; layout == 2 && !done; j++) {
+		if ( nTimer > ((j-1)*(j-1)) && nTimer <= (j*j) ) {
+			ncol = j;
+			nrow = j;
+			done = true;
+		}
+	}
+	// int ncol = this->width()  / Timer::w;
+	// int nrow = this->height() / Timer::h;
+	// if (nTimer > ncol*nrow) ncol++;
+	
+	// Create new layout:
+	int col = 0,row = 0;
+	for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i ) {
+		if (*i != NULL) {
+			gridLayout->addWidget((*i), row, col);
+			switch(layout) {
+				case 0: // horizontalAction
+					col++;
+					break;
+				case 1: // verticalAction
+					row++;
+					break;
+				case 2: // gridAction
+					// column major:
+					col++;
+					if (col > ncol-1) {
+						col = 0;
+						row++;
+					}
+					// row major:
+					// row++;
+					// if (row > nrow-1) {
+						// row = 0;
+						// col++;
+					// }
+			}
+		}
+	}
+}
 
 void TimerManager::messageClicked()
 {
 	trayIcon->setIcon(*greyIcon);
 }
-
-// void Timer::setCountUp(bool b)
-// {
-	// countUp = b;
-// }
-
-// void Timer::resetHourSlider()
-// {
-	// ui->hourSlider->setValue(0);
-// }
-
-// void Timer::resetMinuteSlider()
-// {
-	// ui->minuteSlider->setValue(0);
-// }
-
-// void Timer::hourSliderMoved(int val)
-// {
-	// hours += val;
-	// off=false;
-	// showTime();
-// }
-
-// void Timer::on_pushButton_clicked()
-// {
-   // if (!started) {
-      // randomStopTime();
-      // time->start();
-      // connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
-      // started = true;
-      // ui->pushButton->setText("Stop");
-      // return;
-   // }
-   // else{
-      // disconnect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
-      // started = false;
-      // ui->pushButton->setText("Start");
-      // checkResult();
-   // }
-// }
-
-// void Timer::randomStopTime()
-// {
-   // targetSecs  = rand() % 10;
-   // targetKsecs = (rand() % 1000) / 10;
-   // ui->targetNumber->display(QString("%1:%2").arg(targetSecs,2).arg(targetKsecs,2));
-   // //qDebug() << targetSecs << targetKsecs;
-// }
-
-// void Timer::checkResult()
-// {
-   // if (stopSecs == targetSecs && abs(targetKsecs - stopKsecs) < 10) {
-      // QMessageBox::information(this, "STP", "Winner!");
-   // }else{
-      // QMessageBox::information(this, "STP", "meh");
-   // }
-// }
