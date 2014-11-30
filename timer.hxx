@@ -24,6 +24,8 @@ class Timer : public QWidget
 		Timer(QWidget *parent, int id);
 		~Timer();
 		int getId();
+		static const unsigned int  h = 180;
+		static const unsigned int  w = 205;
 		
 	public slots:
 		void stop();
@@ -34,7 +36,8 @@ class Timer : public QWidget
 		
 	private slots:
 		void updateTime();
-		void showTime(bool toggle_colon);
+		// void showTime(bool toggle_colon);
+		void showTime(void);
 		//void showTimeWithToggle();
 		void start();
 		void stopReset();
