@@ -18,7 +18,7 @@ Timer::Timer(QWidget *parent, int _id)
 	ui->setupUi(this);
 	id        = _id;
 	name      = "Timer"+QString("%1").arg(id);
-	_started   = false;
+	_started  = false;
 	off       = false;
 	countUp   = false;
 	showSecs  = true;
@@ -32,7 +32,15 @@ Timer::Timer(QWidget *parent, int _id)
 	timer   = new QTimer(this);
 	timer->start(1000); // one second
 	setName(name);
-	
+
+	// height = 180;
+	// width  = 205;
+	setMinimumSize(Timer::w,Timer::h);
+	QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	sizePolicy.setHorizontalStretch(0);
+	sizePolicy.setVerticalStretch(0);
+	setSizePolicy(sizePolicy);
+
 	connect( ui->startButton, SIGNAL( clicked() ), this, SLOT( start() ) );
 	connect( ui->stopButton,  SIGNAL( clicked() ), this, SLOT( stopReset()  ) );
 	// connect( ui->actionExit,  SIGNAL(triggered()), qApp, SLOT( quit()  ) );
@@ -132,7 +140,8 @@ Timer::Timer(QWidget *parent, int _id)
 	actionSetName = new QAction("Set &Name",this);
 	connect( actionSetName, SIGNAL( triggered() ), this, SLOT( showSetNameDialog() ) );
 	
-	showTime(false);
+	// showTime(false);
+	showTime();
 }
 
 Timer::~Timer()
@@ -266,7 +275,8 @@ void Timer::stopReset()
 		minutes = 0;
 		secs = 0;
 		//off = false;
-		showTime(false);
+		// showTime(false);
+		showTime();
 		// trayIcon->setIcon(*greyIcon);
 		return;
 	}
@@ -308,12 +318,14 @@ void Timer::updateTime()
 			hours--;
 		}
 	}
-	showTime(true);
+	// showTime(true);
+	showTime();
 	if (done) emit timesUp(name);
 }
 
 //TODO: clean up the blinking colon technology. This argument was related to that i think and it's no longer used.
-void Timer::showTime(bool toggle_colon)
+// void Timer::showTime(bool toggle_colon)
+void Timer::showTime(void)
 {
 	QString time;
 	if (showSecs) {
@@ -382,7 +394,8 @@ void Timer::timeCtrlClicked(int b)
 		//default:
 	}
 	//off=false;
-	showTime(false);
+	// showTime(false);
+	showTime();
 }
 int Timer::getId() {
 	return id;
@@ -399,7 +412,8 @@ void Timer::showSeconds(bool val)
 		ui->sUpButton->hide();
 		ui->sDownButton->hide();
 	}
-	showTime(_started);
+	// showTime(_started);
+	showTime();
 }
 
 void Timer::showProgressBar(bool val)
@@ -410,7 +424,8 @@ void Timer::showProgressBar(bool val)
 	}else{
 		ui->progressBar->hide();
 	}
-	showTime(_started);
+	// showTime(_started);
+	showTime();
 }
 
 void Timer::showSetTimeDialog()
@@ -521,7 +536,8 @@ void Timer::setTime(const QString &val)
 	minutes %= 60;
 	
 	// update display
-	showTime(false);
+	// showTime(false);
+	showTime();
 	
 	if (! isVisible()) {
 		//show();
@@ -536,7 +552,8 @@ void Timer::setName(const QString &val)
 	name = val;
 	// setWindowTitle(val);
 	ui->groupBox->setTitle(val);
-	showTime(false);
+	// showTime(false);
+	showTime();
 }
 
 // void Timer::messageClicked()
