@@ -1,14 +1,14 @@
 // Qt Timer application.
 // Written by Russell Auld <russ@russauld.com>
-
+//
+// Class defintion for a single Timer object.
+//
 #ifndef TIMER_HXX
 #define TIMER_HXX
 
 #include <QWidget>
 #include <QSignalMapper>
 #include <QTimer>
-// #include <QSystemTrayIcon>
-// #include <QCloseEvent>
 
 namespace Ui
 {
@@ -26,52 +26,47 @@ class Timer : public QWidget
 		int getId();
 		static const unsigned int  h = 180;
 		static const unsigned int  w = 205;
+		QString getName(void) const;
+		bool getCountUp(void) const;
+		bool getShowSeconds(void) const;
+		bool getShowProgressBar(void) const;
+		bool running(void) const;
 		
 	public slots:
 		void stop();
+		void showSeconds(bool);
+		void showProgressBar(bool);
+		void setName(const QString &);
+		void setCountUp(bool);
+		void stopReset();
 		
 	protected:
-		// void closeEvent(QCloseEvent *event);
 		void contextMenuEvent ( QContextMenuEvent * event );
 		
 	private slots:
 		void updateTime();
-		// void showTime(bool toggle_colon);
 		void showTime(void);
-		//void showTimeWithToggle();
 		void start();
-		void stopReset();
 		void timeCtrlClicked(int);
-		void showSeconds(bool);
-		void showProgressBar(bool);
-		// void iconActivated(QSystemTrayIcon::ActivationReason reason);
 		void setTime(const QString &);
-		void setName(const QString &);
 		void showSetTimeDialog();
 		void setTimeFromDialog();
 		void showSetNameDialog();
 		void setNameFromDialog();
-		// void messageClicked();
-		void setCountUp(bool);
-		//void resetMinuteSlider();
-		//void hourSliderMoved(int);
 		void closeRequest();
 		
 	signals:
 		void closeMe(int);
 		void timesUp(QString);
 		void started(int);
+		void wasReset(int);
+		void nameChanged(int);
 		
 	private:
 		QString name;
 		int id;
 		QTimer *timer;
-		// //QTimer *countdownTimer;
 		QSignalMapper *signalMapper;
-		// QSystemTrayIcon *trayIcon;
-		// QMenu           * trayMenu;
-		// QIcon  *redIcon;
-		// QIcon  *greyIcon;
 		Ui::Timer *ui;
 		Ui::SetValueDialog *newTimeDialogUi;
 		Ui::SetValueDialog *newNameDialogUi;
@@ -83,8 +78,6 @@ class Timer : public QWidget
 		int  minutes;
 		int  hours;
 		bool off; //TODO: Review the use of this. Seems irrelevant - maybe related to the blinky colons
-		// void timesUp();
-		// bool firstHide;
 		QAction *fiveMinAction;
 		QAction *tenMinAction;
 		QAction *fifteenMinAction;
