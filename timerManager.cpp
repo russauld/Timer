@@ -4,6 +4,7 @@
 #include "timerManager.hxx"
 
 #include <QMessageBox>
+#include <QSettings>
 
 TimerManager::TimerManager(QWidget *parent)
     : QMainWindow(parent)
@@ -28,6 +29,7 @@ TimerManager::TimerManager(QWidget *parent)
 	
 	quitAction = new QAction(tr("&Quit"), this);
 	connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
+	connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(wrapItUp()) );
 	trayMenu->addAction(quitAction);
 	
 	redIcon  = new QIcon(":/Classic-Timer-Red-icon_32x32.png");
@@ -40,21 +42,24 @@ TimerManager::TimerManager(QWidget *parent)
 	connect(trayIcon, SIGNAL( messageClicked() ), this, SLOT( messageClicked() ) );
 	trayIcon->show();
 	
-	newAct = new QAction("&New",this);
+	newAct = new QAction("&New Timer",this);
 	connect( newAct, SIGNAL( triggered() ), this, SLOT( newTimer() ) );
 	
 	radioAction = new QAction("&Radio Behavior",this);
 	radioAction->setCheckable(true);
-	radioAction->setChecked(radio);
-	connect( radioAction, SIGNAL(toggled(bool)), this, SLOT(setRadioBehavior(bool)));
+	// radioAction->setChecked(radio);
 	setRadioBehavior(radio);
+	connect( radioAction, SIGNAL(toggled(bool)), this, SLOT(setRadioBehavior(bool)));
+	
+	resetAllAction = new QAction("Reset &All",this);
+	connect( resetAllAction, SIGNAL(triggered()), this, SLOT(resetAll()));
 	
 	debugAction = new QAction("Debug",this);
 	connect( debugAction, SIGNAL(triggered()), this, SLOT(debug()));
 	
 	fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(newAct);
-	fileMenu->addAction(radioAction);
+	// fileMenu->addAction(radioAction); //moved to optionMenu
 	// fileMenu->addAction(debugAction);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAction);
@@ -81,10 +86,12 @@ TimerManager::TimerManager(QWidget *parent)
 	signalMapper->setMapping(gridAction, 2);
 	connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(setLayoutType(int)) );
 
-	layout = 2;
+	layout = static_cast<int>(LAYOUT::GRID);
 	gridAction->setChecked(true);
 	
 	optionMenu = menuBar()->addMenu(tr("&Option"));
+	optionMenu->addAction(radioAction);
+	optionMenu->addAction(resetAllAction);
 	layoutMenu = optionMenu->addMenu(tr("&Layout"));
 	layoutMenu->addAction(horizontalAction);
 	layoutMenu->addAction(verticalAction);
@@ -92,6 +99,7 @@ TimerManager::TimerManager(QWidget *parent)
 	
 	// resizeTimer = new QTimer(this);
 	// connect(resizeTimer, SIGNAL( timeout() ), this, SLOT( resizeTimeout() ) );
+	readSettings();
 }
 
 TimerManager::~TimerManager()
@@ -131,6 +139,11 @@ void TimerManager::closeEvent(QCloseEvent *event)
 	}
 }
 
+void TimerManager::wrapItUp()
+{
+	writeSettings();
+}
+
 void TimerManager::resizeEvent(QResizeEvent *event)
 {
 	// This will get called repeatedly as the window is dragged. We only want to update occasionally, so we use a timer.
@@ -139,14 +152,17 @@ void TimerManager::resizeEvent(QResizeEvent *event)
 	QMainWindow::resizeEvent(event);
 }
 
+// Timers are also created in readSettings()
 void TimerManager::newTimer()
 {
-	int id = timerList.length(); 
+	int id = timerList.length();
 	Timer *t = new Timer(centralWidget, id);
 	timerList.push_back(t);
 	connect( t, SIGNAL( closeMe(int) ), this, SLOT(closeTimer(int)) );
 	connect( t, SIGNAL( timesUp(QString) ), this, SLOT(timerExpired(QString)) );
 	connect( t, SIGNAL( started(int) ), this, SLOT( timerStarted(int) ) );
+	connect( t, SIGNAL( wasReset(int) ), this, SLOT( timerReset(int) ) );
+	connect( t, SIGNAL( nameChanged(int) ), this, SLOT( timerRenamed(int) ) );
 	// int row = nTimer % 2;
 	// int col = nTimer / 2;
 	// gridLayout->addWidget(t,row,col);
@@ -155,6 +171,7 @@ void TimerManager::newTimer()
 	// QMessageBox::information(this,"DEBUG",s);
 	nTimer++;
 	computeLayout();
+	updateTrayMessage();
 }
 
 void TimerManager::debug()
@@ -184,12 +201,14 @@ void TimerManager::closeTimer(int _id)
 		// The layout takes ownership of the widget so it will handle the delete.
 		nTimer--;
 		computeLayout();
+		updateTrayMessage();
 	}
 }
 
 void TimerManager::setRadioBehavior(bool v)
 {
 	radio = v;
+	radioAction->setChecked(radio);
 }
 
 void TimerManager::setLayoutType(int t)
@@ -225,6 +244,19 @@ void TimerManager::timerStarted(int c)
 			}
 		}
 	}
+}
+
+void TimerManager::timerReset(int id)
+{
+	id;
+	// just reset the tray icon when something was reset - dont need to use the id.
+	this->messageClicked();
+}
+
+void TimerManager::timerRenamed(int id)
+{
+	id; // Don't care about the id at this time.
+	this->updateTrayMessage();
 }
 
 void TimerManager::iconActivated(QSystemTrayIcon::ActivationReason reason)
@@ -325,4 +357,109 @@ void TimerManager::computeLayout(void)
 void TimerManager::messageClicked()
 {
 	trayIcon->setIcon(*greyIcon);
+}
+
+// Timers are also created in newTimer()
+void TimerManager::readSettings()
+{
+	QSettings settings( QSettings::IniFormat, QSettings::UserScope, "RussAuld", "Timer", this );
+	restoreGeometry(settings.value("geometry").toByteArray());
+	restoreState(settings.value("windowState").toByteArray());
+	setRadioBehavior(settings.value("Radio").toBool());
+	int n=settings.value("NumberOfTimers").toInt();
+	if (n >= 0 && n < MAX_TIMERS) nTimer=n; 
+	n=settings.value("Layout").toInt();
+	if (n == static_cast<int>(LAYOUT::HORIZ) ) {
+		layout = static_cast<int>(LAYOUT::HORIZ);
+		horizontalAction->setChecked(true);
+	}else if (n == static_cast<int>(LAYOUT::VERT)) {
+		layout = static_cast<int>(LAYOUT::VERT);
+		verticalAction->setChecked(true);
+	}else {
+		layout = static_cast<int>(LAYOUT::GRID);
+		gridAction->setChecked(true);
+	}
+	QString name;
+	for (int i=0; i < nTimer; i++) {
+		int id = timerList.length();
+		Timer *t = new Timer(centralWidget, id);
+		timerList.push_back(t);
+		connect( t, SIGNAL( closeMe(int) ), this, SLOT(closeTimer(int)) );
+		connect( t, SIGNAL( timesUp(QString) ), this, SLOT(timerExpired(QString)) );
+		connect( t, SIGNAL( started(int) ), this, SLOT( timerStarted(int) ) );
+		connect( t, SIGNAL( wasReset(int) ), this, SLOT( timerReset(int) ) );
+		connect( t, SIGNAL( nameChanged(int) ), this, SLOT( timerRenamed(int) ) );
+		name = QString("Timer-%1").arg(i+1);
+		settings.beginGroup(name);
+		t->setName(settings.value("Title").toString());
+		t->showSeconds(settings.value("ShowSeconds").toBool());
+		t->showProgressBar(settings.value("ShowProgress").toBool());
+		t->setCountUp(settings.value("CountUp").toBool());
+		settings.endGroup();
+	}
+	computeLayout();
+	updateTrayMessage();
+}
+
+void TimerManager::writeSettings()
+{
+	QString name;
+	QList< Timer* >::const_iterator i;
+	int j=1;
+	QSettings settings( QSettings::IniFormat, QSettings::UserScope, "RussAuld", "Timer", this );
+	settings.clear();
+	settings.setValue("geometry", saveGeometry());
+	settings.setValue("windowState", saveState());
+	settings.setValue("NumberOfTimers",nTimer);
+	settings.setValue("Layout",layout);
+	settings.setValue("Radio",radio);
+	for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i) {
+		if ( (*i) == NULL ) continue;
+		name = QString("Timer-%1").arg(j);
+		settings.beginGroup(name);
+		settings.setValue("Title", (*i)->getName() );
+		settings.setValue("ShowSeconds", (*i)->getShowSeconds() );
+		settings.setValue("ShowProgress", (*i)->getShowProgressBar() );
+		settings.setValue("CountUp", (*i)->getCountUp() );
+		settings.endGroup();
+		j++;
+	}
+}
+
+void TimerManager::resetAll(void)
+{
+	QList< Timer* >::const_iterator i;
+	for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i) {
+		if ( (*i) == NULL ) continue;
+		(*i)->stopReset();
+	}
+}
+
+void TimerManager::updateTrayMessage(void)
+{
+	QList< Timer* >::const_iterator i;
+	QString m;
+	if (nTimer == 0) {
+		m = QString("No timers");
+	}else if (nTimer == 1) {
+		m = QString("1 timer: ");
+		for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i) {
+			if ( (*i) == NULL ) continue;
+			m += (*i)->getName();
+		}
+	}else{
+		m = QString("%1 timers:\n").arg(nTimer);
+		bool first=true;
+		for ( i = timerList.constBegin(); i != timerList.constEnd(); ++i) {
+			if ( (*i) == NULL ) continue;
+			if (first) {
+				m += (*i)->getName();
+				first=false;
+			}else{
+				m += ", ";
+				m += (*i)->getName();
+			}
+		}
+	}
+	trayIcon->setToolTip(m);
 }
