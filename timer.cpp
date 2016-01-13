@@ -117,7 +117,7 @@ Timer::Timer(QWidget *parent, int _id)
 	actionShowSeconds = new QAction("Show &Seconds",this);
 	actionShowSeconds->setCheckable(true);
 	connect( actionShowSeconds, SIGNAL( toggled(bool) ), this, SLOT(showSeconds(bool) ) );
-	actionShowSeconds->setChecked(showSecs);
+	// actionShowSeconds->setChecked(showSecs);
 	showSeconds(showSecs);
 	
 	actionShowProgressBar = new QAction("Show &Progress Bar",this);
@@ -125,13 +125,13 @@ Timer::Timer(QWidget *parent, int _id)
 	// Calling this function should cause the toggled() signal to be emitted:
 	// what function? connect? 
 	connect( actionShowProgressBar, SIGNAL( toggled(bool) ), this, SLOT( showProgressBar(bool) ) );
-	actionShowProgressBar->setChecked(showBar);
+	// actionShowProgressBar->setChecked(showBar);
 	showProgressBar(showBar);
 	
 	actionCountUp = new QAction("&Count Up",this);
 	actionCountUp->setCheckable(true);
 	connect( actionCountUp, SIGNAL( toggled(bool) ), this, SLOT( setCountUp(bool) ) );
-	actionCountUp->setChecked(countUp);
+	// actionCountUp->setChecked(countUp);
 	setCountUp(countUp);
 	
 	actionSetTime = new QAction("Set &Time",this);
@@ -278,6 +278,7 @@ void Timer::stopReset()
 		// showTime(false);
 		showTime();
 		// trayIcon->setIcon(*greyIcon);
+		emit wasReset(id);
 		return;
 	}
 	stop();
@@ -414,6 +415,7 @@ void Timer::showSeconds(bool val)
 	}
 	// showTime(_started);
 	showTime();
+	actionShowSeconds->setChecked(showSecs);
 }
 
 void Timer::showProgressBar(bool val)
@@ -426,6 +428,7 @@ void Timer::showProgressBar(bool val)
 	}
 	// showTime(_started);
 	showTime();
+	actionShowProgressBar->setChecked(showBar);
 }
 
 void Timer::showSetTimeDialog()
@@ -553,7 +556,13 @@ void Timer::setName(const QString &val)
 	// setWindowTitle(val);
 	ui->groupBox->setTitle(val);
 	// showTime(false);
+	emit nameChanged(id);
 	showTime();
+}
+
+QString Timer::getName(void) const
+{
+	return ui->groupBox->title();
 }
 
 // void Timer::messageClicked()
@@ -565,6 +574,26 @@ void Timer::setCountUp(bool b)
 {
 	countUp = b;
 	actionCountUp->setChecked(b);
+}
+
+bool Timer::getCountUp(void) const
+{
+	return countUp;
+}
+
+bool Timer::getShowSeconds(void) const
+{
+	return showSecs;
+}
+
+bool Timer::getShowProgressBar(void) const
+{
+	return showBar;
+}
+
+bool Timer::running(void) const
+{
+	return _started;
 }
 
 // void Timer::resetHourSlider()
