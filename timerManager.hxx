@@ -24,6 +24,8 @@ class TimerManager : public QMainWindow
 		TimerManager(QWidget *parent = 0);
 		~TimerManager();
 		
+		enum LAYOUT { HORIZ=0, VERT, GRID };
+		
 	protected:
 		void closeEvent(QCloseEvent *event);
 		void resizeEvent(QResizeEvent *event);
@@ -53,9 +55,13 @@ class TimerManager : public QMainWindow
 		void setRadioBehavior(bool);
 		void timerExpired(QString);
 		void timerStarted(int);
+		void timerReset(int);
+		void timerRenamed(int);
 		void debug();
 		void resizeTimeout();
 		void setLayoutType(int);
+		void wrapItUp();
+		void resetAll();
 		
 	//public signals:
 		//	void timesUp();
@@ -70,11 +76,13 @@ class TimerManager : public QMainWindow
 		int nTimer;
 		int resizeTimeoutVal;
 		int layout;
+		const int MAX_TIMERS = 10;
 		QSignalMapper *signalMapper;
 		QAction *quitAction;
 		QAction *newAct;
 		QAction *radioAction;
 		QAction *debugAction;
+		QAction *resetAllAction;
 		QMenu   *fileMenu;
 		QMenu   *optionMenu;
 		QMenu   *layoutMenu;
@@ -87,6 +95,10 @@ class TimerManager : public QMainWindow
 		QList< Timer* > timerList;
 		// QTimer *resizeTimer;
 		void computeLayout(void);
+		void writeSettings();
+		void readSettings();
+		void updateTrayMessage();
+
 };
 
 #endif // TIMERMANAGER_HXX
