@@ -1,6 +1,8 @@
 Timer
 =====
 
+New: Be sure to check out the MultiTimer branch! It's been the primary development branch recently. Lots of improvements and frankly a very useful tool.
+
 Just like your kitchen timer, but on your computer!
 
 There are up and down arrows to set the number of hours, minutes, and seconds to be counted down.
